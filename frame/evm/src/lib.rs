@@ -56,11 +56,14 @@
 #[cfg(test)]
 mod mock;
 pub mod runner;
+pub mod decimal_converter;
 #[cfg(test)]
 mod tests;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 pub mod benchmarks;
+
+pub use decimal_converter::*;
 
 pub use crate::runner::Runner;
 pub use evm::{Context, ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
@@ -358,6 +361,8 @@ pub mod pallet {
 		GasPriceTooLow,
 		/// Nonce is invalid
 		InvalidNonce,
+		/// Invalid decimals
+		InvalidDecimals,
 	}
 
 	#[pallet::genesis_config]
@@ -638,7 +643,9 @@ impl<T: Config> Pallet<T> {
 
 		Account {
 			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
-			balance: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(balance)),
+			balance: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
+				convert_decimals_to_evm(balance),
+			)),
 		}
 	}
 

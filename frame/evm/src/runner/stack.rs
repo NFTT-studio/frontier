@@ -20,6 +20,7 @@
 use crate::{
 	runner::Runner as RunnerT, AccountCodes, AccountStorages, AddressMapping, BlockHashMapping,
 	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
+	decimal_converter::*,
 };
 use evm::{
 	backend::Backend as BackendT,
@@ -579,11 +580,15 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
 		let source = T::AddressMapping::into_account_id(transfer.source);
 		let target = T::AddressMapping::into_account_id(transfer.target);
+		let amount = convert_decimals_from_evm(transfer.value.low_u128())
+			.ok_or(ExitError::Other(Into::<&str>::into(Error::<T>::InvalidDecimals).into()))?
+			.unique_saturated_into();
+
 
 		T::Currency::transfer(
 			&source,
 			&target,
-			transfer.value.low_u128().unique_saturated_into(),
+			amount,
 			ExistenceRequirement::AllowDeath,
 		)
 		.map_err(|_| ExitError::OutOfFund)

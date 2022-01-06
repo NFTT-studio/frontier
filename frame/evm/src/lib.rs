@@ -56,14 +56,11 @@
 #[cfg(test)]
 mod mock;
 pub mod runner;
-pub mod decimal_converter;
 #[cfg(test)]
 mod tests;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 pub mod benchmarks;
-
-pub use decimal_converter::*;
 
 pub use crate::runner::Runner;
 pub use evm::{Context, ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
@@ -88,7 +85,7 @@ use frame_system::RawOrigin;
 use serde::{Deserialize, Serialize};
 use sp_core::{Hasher, H160, H256, U256};
 use sp_runtime::{
-	traits::{BadOrigin, Saturating, UniqueSaturatedInto, Zero},
+	traits::{BadOrigin, CheckedDiv, Saturating, UniqueSaturatedInto, Zero},
 	AccountId32,
 };
 use sp_std::vec::Vec;
@@ -125,6 +122,8 @@ pub mod pallet {
 		type AddressMapping: AddressMapping<Self::AccountId>;
 		/// Currency type for withdraw and balance storage.
 		type Currency: Currency<Self::AccountId> + Inspect<Self::AccountId>;
+		/// Substrate native token decimals
+		type TokenDecimals: Get<u8>;
 
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -644,7 +643,7 @@ impl<T: Config> Pallet<T> {
 		Account {
 			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
 			balance: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
-				convert_decimals_to_evm(balance),
+				Self::convert_decimals_to_evm(balance),
 			)),
 		}
 	}
@@ -655,6 +654,37 @@ impl<T: Config> Pallet<T> {
 		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
 
 		T::FindAuthor::find_author(pre_runtime_digests).unwrap_or_default()
+	}
+
+	/// Convert decimal between native(12) and EVM(18) and therefore the 1_000_000 conversion.
+	fn token_scaling() -> u32 {
+		let pow: u8 = 18 - T::TokenDecimals::get();
+		let scaling: u32 = 10u32.saturating_pow(pow.into());
+		scaling.into()
+	}
+
+	/// Convert decimal from native(KAR/ACA 12) to EVM(18).
+	pub fn convert_decimals_to_evm<B: Zero + Saturating + From<u32>>(b: B) -> B {
+		if b.is_zero() {
+			return b;
+		}
+		b.saturating_mul(Self::token_scaling().into())
+	}
+
+	/// Convert decimal from EVM(18) to native(KAR/ACA 12).
+	pub fn convert_decimals_from_evm<B: Zero + Saturating + CheckedDiv + PartialEq + Copy + From<u32>>(b: B) -> Option<B> {
+		if b.is_zero() {
+			return Some(b);
+		}
+		let res = b
+			.checked_div(&Into::<B>::into(Self::token_scaling()))
+			.expect("divisor is non-zero; qed");
+
+		if res.saturating_mul(Self::token_scaling().into()) == b {
+			Some(res)
+		} else {
+			None
+		}
 	}
 }
 

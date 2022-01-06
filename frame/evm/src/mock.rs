@@ -124,6 +124,7 @@ impl crate::Config for Test {
 
 	type AddressMapping = IdentityAddressMapping;
 	type Currency = Balances;
+	type TokenDecimals = 18;
 	type Runner = crate::runner::stack::Runner<Self>;
 
 	type Event = Event;

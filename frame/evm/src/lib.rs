@@ -642,9 +642,11 @@ impl<T: Config> Pallet<T> {
 
 		Account {
 			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
-			balance: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
-				Self::convert_decimals_to_evm(balance),
-			)),
+			balance: U256::from(
+				Self::convert_decimals_to_evm(
+					UniqueSaturatedInto::<u128>::unique_saturated_into(balance),
+				),
+			),
 		}
 	}
 
@@ -657,14 +659,14 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Convert decimal between native(12) and EVM(18) and therefore the 1_000_000 conversion.
-	fn token_scaling() -> u32 {
+	fn token_scaling() -> u64 {
 		let pow: u8 = 18 - T::TokenDecimals::get();
-		let scaling: u32 = 10u32.saturating_pow(pow.into());
+		let scaling: u64 = 10u64.saturating_pow(pow.into());
 		scaling.into()
 	}
 
 	/// Convert decimal from native(KAR/ACA 12) to EVM(18).
-	pub fn convert_decimals_to_evm<B: Zero + Saturating + From<u32>>(b: B) -> B {
+	pub fn convert_decimals_to_evm<B: Zero + Saturating + From<u64>>(b: B) -> B {
 		if b.is_zero() {
 			return b;
 		}
@@ -672,7 +674,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Convert decimal from EVM(18) to native(KAR/ACA 12).
-	pub fn convert_decimals_from_evm<B: Zero + Saturating + CheckedDiv + PartialEq + Copy + From<u32>>(b: B) -> Option<B> {
+	pub fn convert_decimals_from_evm<B: Zero + Saturating + CheckedDiv + PartialEq + Copy + From<u64>>(b: B) -> Option<B> {
 		if b.is_zero() {
 			return Some(b);
 		}

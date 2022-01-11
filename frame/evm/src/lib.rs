@@ -122,8 +122,6 @@ pub mod pallet {
 		type AddressMapping: AddressMapping<Self::AccountId>;
 		/// Currency type for withdraw and balance storage.
 		type Currency: Currency<Self::AccountId> + Inspect<Self::AccountId>;
-		/// Substrate native token decimals
-		type TokenDecimals: Get<u8>;
 
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -148,6 +146,10 @@ pub mod pallet {
 		/// EVM config used in the module.
 		fn config() -> &'static EvmConfig {
 			&LONDON_CONFIG
+		}
+
+		fn token_decimals() -> u8 {
+			18
 		}
 	}
 
@@ -660,7 +662,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Convert decimal between native(12) and EVM(18) and therefore the 1_000_000 conversion.
 	fn token_scaling() -> u64 {
-		let pow: u8 = 18 - T::TokenDecimals::get();
+		let pow: u8 = 18 - T::token_decimals();
 		let scaling: u64 = 10u64.saturating_pow(pow.into());
 		scaling.into()
 	}

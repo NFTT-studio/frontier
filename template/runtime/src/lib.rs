@@ -302,6 +302,7 @@ parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
+	pub TokenDecimals: u8 = 18;
 }
 
 impl pallet_evm::Config for Runtime {
@@ -312,6 +313,7 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type Currency = Balances;
+	type TokenDecimals = TokenDecimals;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesType = FrontierPrecompiles<Self>;

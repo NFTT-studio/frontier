@@ -34,7 +34,7 @@ use frame_support::{
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
-use sp_std::{boxed::Box, collections::btree_set::BTreeSet, marker::PhantomData, mem, vec::Vec};
+use sp_std::{boxed::Box, collections::btree_set::BTreeSet, marker::PhantomData, mem, vec::Vec, if_std};
 
 #[derive(Default)]
 pub struct Runner<T: Config> {
@@ -579,10 +579,18 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
 		let source = T::AddressMapping::into_account_id(transfer.source);
 		let target = T::AddressMapping::into_account_id(transfer.target);
+		if_std!{
+			println!("transfer.source = {:#?}", transfer.source);
+			println!("transfer.target = {:#?}", transfer.target);
+			println!("transfer.value = {:#?}", transfer.value);
+		}
 		let amount = Pallet::<T>::convert_decimals_from_evm(transfer.value.low_u128())
 			.ok_or(ExitError::Other(Into::<&str>::into(Error::<T>::InvalidDecimals).into()))?
 			.unique_saturated_into();
 
+		if_std!{
+			println!("amount = {:#?}", amount);
+		}
 
 		T::Currency::transfer(
 			&source,

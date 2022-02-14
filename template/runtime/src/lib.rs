@@ -53,8 +53,14 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-mod precompiles;
-use precompiles::FrontierPrecompiles;
+mod precompiles2;
+use precompiles2::FrontierPrecompiles;
+
+extern crate alloc;
+mod pset3;
+use alloc::collections::BTreeMap;
+use pset3::PrecompileFn;
+use pset3::MyFrontierPrecompiles;
 
 /// Type of block number.
 pub type BlockNumber = u32;
@@ -246,7 +252,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
+	pub const ExistentialDeposit: u128 = 0;
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 50;
@@ -298,14 +304,18 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	}
 }
 
+pub type Precompiles = FrontierPrecompiles<Runtime>;
+// type PrecompilesType = BTreeMap<H160, PrecompileFn>;
+
 parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
+	pub PrecompilesValue: Precompiles = Precompiles::new();
+	// pub PrecompilesValue: BTreeMap<H160, PrecompileFn> = MyFrontierPrecompiles::<Runtime>::new();
 }
 
 impl pallet_evm::Config for Runtime {
-	type FeeCalculator = BaseFee;
+	type FeeCalculator = ();
 	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
@@ -314,12 +324,12 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = FrontierPrecompiles<Self>;
+	type PrecompilesType = Precompiles;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type OnChargeTransaction = ();
-	type FindAuthor = FindAuthorTruncated<Aura>;
+	type FindAuthor = ();
 }
 
 impl pallet_ethereum::Config for Runtime {

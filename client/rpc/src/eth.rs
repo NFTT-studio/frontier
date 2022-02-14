@@ -1147,6 +1147,7 @@ where
 					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
+					println!("======================================================= 34");
 					error_on_execution_failure(&info.exit_reason, &info.value)?;
 					Ok(Bytes(info.value))
 				} else if api_version >= 2 {
@@ -1166,6 +1167,8 @@ where
 						.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 						.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
+					println!("======================================================= 56");
+					println!("======================================================= {:?}", &info);
 					error_on_execution_failure(&info.exit_reason, &info.value)?;
 					Ok(Bytes(info.value))
 				} else {
@@ -1190,6 +1193,7 @@ where
 					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 					.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
+					println!("======================================================= 78");
 					error_on_execution_failure(&info.exit_reason, &[])?;
 					Ok(Bytes(info.value[..].to_vec()))
 				} else if api_version >= 2 {
@@ -1208,6 +1212,7 @@ where
 						.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 						.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
+					println!("======================================================= 90");
 					error_on_execution_failure(&info.exit_reason, &[])?;
 					Ok(Bytes(info.value[..].to_vec()))
 				} else {
@@ -1443,14 +1448,23 @@ where
 							)))
 						}
 						// The execution has been done with block gas limit, so it is not a lack of gas from the user.
-						other => error_on_execution_failure(&other, &data)?,
+						// other => error_on_execution_failure(&other, &data)?,
+						other => {
+							println!("======================================================= revert 1");
+							error_on_execution_failure(&other, &data)?
+						}
 					}
 				} else {
 					// The execution has already been done with block gas limit, so it is not a lack of gas from the user.
+					println!("======================================================= revert 2");
 					error_on_execution_failure(&ExitReason::Revert(revert), &data)?
 				}
 			}
-			other => error_on_execution_failure(&other, &data)?,
+			// other => error_on_execution_failure(&other, &data)?,
+			other => {
+				println!("======================================================= other");
+				error_on_execution_failure(&other, &data)?
+			}
 		};
 
 		#[cfg(not(feature = "rpc_binary_search_estimate"))]
@@ -1487,7 +1501,10 @@ where
 					ExitReason::Revert(_) | ExitReason::Error(ExitError::OutOfGas) => {
 						lowest = mid;
 					}
-					other => error_on_execution_failure(&other, &data)?,
+					other => {
+						println!("======================================================= 12");
+						error_on_execution_failure(&other, &data)?
+					}
 				}
 				mid = (highest + lowest) / 2;
 			}

@@ -24,6 +24,7 @@ use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, U256};
 use sp_std::prelude::*;
+use crate::Pallet;
 
 benchmarks! {
 

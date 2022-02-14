@@ -1,6 +1,6 @@
 use frontier_template_runtime::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -70,11 +70,20 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
-		None,
+		// None,
+		Some(get_properties()),
 		// Extensions
 		None,
 	))
 }
+
+fn get_properties() -> sc_service::Properties {
+	let mut prop = sc_service::Properties::new();
+	prop.insert("tokenDecimals".to_string(), 18.into());
+	prop.insert("tokenSymbol".to_string(), "DEV".into());
+	prop
+}
+
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
@@ -134,6 +143,7 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -163,6 +173,17 @@ fn testnet_genesis(
 		evm: EVMConfig {
 			accounts: {
 				let mut map = BTreeMap::new();
+				for addr in Precompiles::used_addresses() {
+					map.insert(
+						addr.into(),
+						pallet_evm::GenesisAccount {
+							nonce: Default::default(),
+							balance: Default::default(),
+							storage: Default::default(),
+							code: revert_bytecode.clone(),
+						},
+					);
+				}
 				map.insert(
 					// H160 address of Alice dev account
 					// Derived from SS58 (42 prefix) address
@@ -172,7 +193,7 @@ fn testnet_genesis(
 					H160::from_str("d43593c715fdd31c61141abd04a99fd6822c8558")
 						.expect("internal H160 is valid; qed"),
 					pallet_evm::GenesisAccount {
-						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+						balance: U256::from_str("0xffffffffffffffff")
 							.expect("internal U256 is valid; qed"),
 						code: Default::default(),
 						nonce: Default::default(),
@@ -184,7 +205,7 @@ fn testnet_genesis(
 					H160::from_str("6be02d1d3665660d22ff9624b7be0551ee1ac91b")
 						.expect("internal H160 is valid; qed"),
 					pallet_evm::GenesisAccount {
-						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+						balance: U256::from_str("0xffffffffffffffff")
 							.expect("internal U256 is valid; qed"),
 						code: Default::default(),
 						nonce: Default::default(),

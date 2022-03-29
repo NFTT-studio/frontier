@@ -18,7 +18,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 //! Benchmarking
-use crate::{runner::Runner, Config, FeeCalculator, Module};
+use crate::{runner::Runner, Config, FeeCalculator, Module, Pallet};
 use frame_benchmarking::{account, benchmarks};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
@@ -81,7 +81,9 @@ benchmarks! {
 			value,
 			gas_limit_create,
 			None,
+			None,
 			Some(nonce_as_u256),
+			Vec::<_>::new(),
 			T::config(),
 		);
 		assert_eq!(create_runner_results.is_ok(), true, "create() failed");
@@ -110,7 +112,9 @@ benchmarks! {
 			value,
 			gas_limit_call,
 			None,
+			None,
 			Some(nonce_as_u256),
+			Vec::<_>::new(),
 			T::config(),
 		);
 		assert_eq!(call_runner_results.is_ok(), true, "call() failed");

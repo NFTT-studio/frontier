@@ -148,9 +148,7 @@ pub mod pallet {
 			&LONDON_CONFIG
 		}
 
-		fn token_decimals() -> u8 {
-			18
-		}
+		const TOKEN_DECIMAL: u8 = 18;
 	}
 
 	#[pallet::call]
@@ -662,7 +660,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Convert decimal between native(12) and EVM(18) and therefore the 1_000_000 conversion.
 	fn token_scaling() -> u64 {
-		let pow: u8 = 18 - T::token_decimals();
+		let pow: u8 = 18 - T::TOKEN_DECIMAL;
 		let scaling: u64 = 10u64.saturating_pow(pow.into());
 		scaling.into()
 	}

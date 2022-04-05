@@ -66,6 +66,7 @@ pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT, A: ChainApi, F: Formatter
 	pool: Arc<P>,
 	graph: Arc<Pool<A>>,
 	client: Arc<C>,
+	#[allow(dead_code)]
 	convert_transaction: Option<CT>,
 	network: Arc<NetworkService<B, H>>,
 	is_authority: bool,
